@@ -1,10 +1,8 @@
-const pagination = Array.from(document.querySelectorAll("a[data-qa='pager-page']")).reverse()
 const ignore = [];
+let nextPage;
 
-pagination.forEach(async p => {
+beforeFlipping(async function(){
     let tostart;
-    
-    p.click();
     
     do {
         const btns = await getButtons();
@@ -16,17 +14,60 @@ pagination.forEach(async p => {
         
             if(ignore.includes(vacancyId))
                 continue;
-    
+        
             tostart = applyVacancy(btn);
             
             ignore.push(vacancyId);
-    
+        
             if(tostart) break;
         }
-        
-    } while (tostart)
     
+    } while (tostart)
 })
+
+async function beforeFlipping(callback){
+    do {
+        await callback();
+        
+        const page = getCurrentPage();
+        nextPage = selectPage(-1);
+    
+        nextPage.click();
+    
+        await isChangedPage(page);
+    } while (nextPage)
+}
+
+function selectPage(plus = 0){
+    const pagination = Array.from(document.querySelectorAll("a[data-qa='pager-page']"));
+    const pageNode = document.querySelector(`a[aria-current="true"]`);
+    const pageIndex = pagination.indexOf(pageNode);
+    const nextPageIndex = pageIndex+plus;
+    
+    return pagination[nextPageIndex]
+}
+
+function isChangedPage(prev){
+    return new Promise(resolve => {
+        const id = setInterval(() => {
+            const page = getCurrentPage();
+            
+            if(page >= 0 && page != prev){
+                clearInterval(id);
+                resolve();
+            }
+        }, 100)
+    })
+};
+
+function getIndexPage(pageNode){
+    const pagination = Array.from(document.querySelectorAll("a[data-qa='pager-page']"));
+    return pagination.indexOf(pageNode);
+}
+
+function getCurrentPage(){
+    return document.querySelector(`a[aria-current="true"]`)?.innerHTML;
+}
 
 function getButtons(){
     const lastTime = new Date().getTime();
@@ -85,4 +126,3 @@ async function applyVacancy(btn){
         
     return restart;
 }
-
