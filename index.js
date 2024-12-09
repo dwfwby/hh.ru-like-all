@@ -1,5 +1,4 @@
 const ignore = [];
-let nextPage;
 
 beforeFlipping(async function(){
     let tostart;
@@ -26,15 +25,19 @@ beforeFlipping(async function(){
 })
 
 async function beforeFlipping(callback){
+    let nextPage;
+    
     do {
         await callback();
         
         const page = getCurrentPage();
         nextPage = selectPage(-1);
-    
-        nextPage.click();
-    
-        await isChangedPage(page);
+
+        if(nextPage){
+            nextPage.click();
+        
+            await isChangedPage(page);
+        }
     } while (nextPage)
 }
 
