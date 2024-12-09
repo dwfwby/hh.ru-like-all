@@ -110,7 +110,7 @@ async function applyVacancy(btn){
             
             if(isApplied){
                 resolve();
-                clearInterval(arr.id);
+                clearInterval(id);
             }
             
             if(isQuestion || isModal){
