@@ -2,13 +2,11 @@ const pagination = Array.from(document.querySelectorAll("a[data-qa='pager-page']
 const ignore = [];
 
 pagination.forEach(async p => {
-    let started = true;
+    let started = false;
     
     p.click();
     
     do {
-        console.log(1)
-        started = false;
         const btns = await getButtons();
         
         if(!btns) break;
@@ -24,14 +22,10 @@ pagination.forEach(async p => {
             ignore.push(vacancyId);
     
             if(started) break;
-            
-            console.log("finish")
         }
         
-        console.log("finish2")
     } while (started)
-        
-    console.log("finish3")
+    
 })
 
 function getButtons(){
