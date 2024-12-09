@@ -2,7 +2,7 @@ const pagination = Array.from(document.querySelectorAll("a[data-qa='pager-page']
 const ignore = [];
 
 pagination.forEach(async p => {
-    let started = false;
+    let tostart;
     
     p.click();
     
@@ -17,14 +17,14 @@ pagination.forEach(async p => {
             if(ignore.includes(vacancyId))
                 continue;
     
-            started = applyVacancy(btn);
+            tostart = applyVacancy(btn);
             
             ignore.push(vacancyId);
     
-            if(started) break;
+            if(tostart) break;
         }
         
-    } while (started)
+    } while (tostart)
     
 })
 
