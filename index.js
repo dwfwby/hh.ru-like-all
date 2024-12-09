@@ -1,7 +1,6 @@
 async function applyVacancy(btn){
-    const vacancyId = new URL(btn.href).searchParams.get("vacancyId");
     const parent = btn.closest('div[data-qa^="vacancy-serp__vacancy"]');
-    const result = {id: vacancyId, restart: false};
+    const restart = false;
 
     btn.click();
 
@@ -25,7 +24,7 @@ async function applyVacancy(btn){
             }
             
             if(isQuestion || isModal){
-                result.restart = true;
+                restart = true;
                 
                 if(isQuestion)
                     history.back();
@@ -38,6 +37,6 @@ async function applyVacancy(btn){
         },100);
     });
         
-    return result
+    return restart;
 }
 
