@@ -39,6 +39,8 @@ async function beforeFlipping(callback){
             await isChangedPage(page);
         }
     } while (nextPage)
+
+    alert("finished!")
 }
 
 function selectPage(plus = 0){
