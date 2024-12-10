@@ -1,27 +1,25 @@
 const ignore = [];
 
 beforeFlipping(async function(){
-    let tostart;
+
+    const btns = await getButtons();
     
-    do {
-        const btns = await getButtons();
-        
-        if(!btns) break;
-        
-        for (let btn of btns) {
-            const vacancyId = new URL(btn.href).searchParams.get("vacancyId");
-        
-            if(ignore.includes(vacancyId))
-                continue;
-        
-            tostart = applyVacancy(btn);
-            
+    if(!btns) return;
+    
+    for (let btn of btns) {
+        const vacancyId = new URL(btn.href).searchParams.get("vacancyId");
+
+        if(await getType(vacancyId) != "quickResponse")
             ignore.push(vacancyId);
-        
-            if(tostart) break;
-        }
+
+        if(ignore.includes(vacancyId))
+            continue;
     
-    } while (tostart)
+        applyVacancy(btn);
+        
+        ignore.push(vacancyId);
+    }
+    
 })
 
 async function beforeFlipping(callback){
@@ -90,18 +88,32 @@ function getButtons(){
     });
 }
 
+async function getType(id){
+    return new Promise(resolve => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.open("GET", `https://saratov.hh.ru/applicant/vacancy_response/popup?vacancyId=${id}&isTest=no&withoutTest=no&lux=true&alreadyApplied=false`);
+        xhr.responseType = 'json';
+        xhr.setRequestHeader("x-hhtmfrom", "vacancy_response");
+        xhr.setRequestHeader("x-hhtmsource", "vacancy_search_list");
+        xhr.setRequestHeader("x-requested-with", "XMLHttpRequest");
+        
+        xhr.onloadend = async () => resolve(xhr?.response?.type);
+        
+        xhr.send();
+    })
+}
+
 async function applyVacancy(btn){
     const parent = btn.closest('div[data-qa^="vacancy-serp__vacancy"]');
-    let restart = false;
 
     btn.click();
 
-    await new Promise(resolve => {
+    return new Promise(resolve => {
         const id = setInterval( () => {
             const relocationConfirm = document.querySelector(`[data-qa="relocation-warning-confirm"]`);
             const isModal = document.querySelector("span.bloko-modal-title")?.innerHTML == "Отклик на вакансию";
             const params = new URLSearchParams(document.location.search);
-            const isQuestion = params.get("startedWithQuestion") != null;
             const status = parent.querySelector(`div[class*="workflow-status-container_mobile--"]`);    
             let isApplied;
 
@@ -110,24 +122,12 @@ async function applyVacancy(btn){
     
             relocationConfirm?.click();
             
-            if(isApplied){
-                resolve();
-                clearInterval(id);
-            }
-            
-            if(isQuestion || isModal){
-                restart = true;
-                
-                if(isQuestion)
-                    history.back();
-                else
-                    document.querySelector(".bloko-modal-close-button").click();
+            if(isApplied || isModal){
+                isModal && document.querySelector(".bloko-modal-close-button").click();
 
                 clearInterval(id);
                 resolve();
             }
         },100);
     });
-        
-    return restart;
 }
