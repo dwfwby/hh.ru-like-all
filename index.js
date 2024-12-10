@@ -9,13 +9,14 @@ beforeFlipping(async function(){
     
     for (let btn of btns) {
         const vacancyId = new URL(btn.href).searchParams.get("vacancyId");
+
+        if(ignore.includes(vacancyId))
+                continue;
+        
         const status = await getType(vacancyId);
         
         if(status != "quickResponse" && (status != "modal" || !modalText))
             ignore.push(vacancyId);
-
-        if(ignore.includes(vacancyId))
-            continue;
     
         applyVacancy(btn);
         
