@@ -1,3 +1,4 @@
+const modalText = "."; // Вставить хотябы один символ, чтобы учитывались модальные окна.
 const ignore = [];
 
 beforeFlipping(async function(){
@@ -8,8 +9,9 @@ beforeFlipping(async function(){
     
     for (let btn of btns) {
         const vacancyId = new URL(btn.href).searchParams.get("vacancyId");
-
-        if(await getType(vacancyId) != "quickResponse")
+        const status = await getType(vacancyId);
+        
+        if(status != "quickResponse" && (status != "modal" || !modalText))
             ignore.push(vacancyId);
 
         if(ignore.includes(vacancyId))
@@ -112,8 +114,8 @@ async function applyVacancy(btn){
     return new Promise(resolve => {
         const id = setInterval( () => {
             const relocationConfirm = document.querySelector(`[data-qa="relocation-warning-confirm"]`);
-            const isModal = document.querySelector("span.bloko-modal-title")?.innerHTML == "Отклик на вакансию";
-            const params = new URLSearchParams(document.location.search);
+            const modalConfirm = document.querySelector(`button[data-qa="vacancy-response-submit-popup"]`);
+            const modalTextarea = document.querySelector(`textarea[data-qa="vacancy-response-popup-form-letter-input"]`);
             const status = parent.querySelector(`div[class*="workflow-status-container_mobile--"]`);    
             let isApplied;
 
@@ -122,9 +124,12 @@ async function applyVacancy(btn){
     
             relocationConfirm?.click();
             
-            if(isApplied || isModal){
-                isModal && document.querySelector(".bloko-modal-close-button").click();
+            if(modalConfirm && modalTextarea && modalText){
+                modalTextarea.value = modalText;
+                modalConfirm.click();
+            }
 
+            if(isApplied){
                 clearInterval(id);
                 resolve();
             }
