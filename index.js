@@ -112,6 +112,7 @@ async function applyVacancy(btn){
     return new Promise(resolve => {
         const id = setInterval( () => {
             const relocationConfirm = document.querySelector(`[data-qa="relocation-warning-confirm"]`);
+            const closeChatik = document.querySelector(`[data-qa="chatik-close-chatik"]`);
             const status = parent.querySelector(`div[class*="workflow-status-container_mobile--"]`);    
             let isApplied;
 
@@ -119,7 +120,8 @@ async function applyVacancy(btn){
                 isApplied = Array.from(status.children).at(-1)?.innerHTML == "Вы откликнулись";
     
             relocationConfirm?.click();
-
+            closeChatik?.click();
+            
             if(isApplied){
                 clearInterval(id);
                 resolve();
