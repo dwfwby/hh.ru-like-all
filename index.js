@@ -1,4 +1,3 @@
-const modalText = ""; // Вставить хотябы один символ, чтобы учитывались модальные окна. Например )
 const ignore = [];
 
 beforeFlipping(async function(){
@@ -15,11 +14,9 @@ beforeFlipping(async function(){
         
         const status = await getType(vacancyId);
         
-        if(status != "quickResponse" && (status != "modal" || !modalText))
-            ignore.push(vacancyId);
-    
-        applyVacancy(btn);
-        
+        if(status == "quickResponse")
+            applyVacancy(btn);
+
         ignore.push(vacancyId);
     }
     
@@ -115,8 +112,6 @@ async function applyVacancy(btn){
     return new Promise(resolve => {
         const id = setInterval( () => {
             const relocationConfirm = document.querySelector(`[data-qa="relocation-warning-confirm"]`);
-            const modalConfirm = document.querySelector(`button[data-qa="vacancy-response-submit-popup"]`);
-            const modalTextarea = document.querySelector(`textarea[data-qa="vacancy-response-popup-form-letter-input"]`);
             const status = parent.querySelector(`div[class*="workflow-status-container_mobile--"]`);    
             let isApplied;
 
@@ -124,13 +119,6 @@ async function applyVacancy(btn){
                 isApplied = Array.from(status.children).at(-1)?.innerHTML == "Вы откликнулись";
     
             relocationConfirm?.click();
-            
-            if(modalConfirm && modalTextarea && modalText){
-                modalTextarea.value = modalText;
-                modalTextarea.dispatchEvent(new Event('change'));
-                
-                modalConfirm.click();
-            }
 
             if(isApplied){
                 clearInterval(id);
