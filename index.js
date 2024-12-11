@@ -17,6 +17,8 @@ beforeFlipping(async function(){
         
         if(status != "quickResponse")
             csv += `\n"${(await getVacancyInfo(vacancyId)).join('", "')}"`;
+        else
+            await applyVacancy(btn);
 
         ignore.push(vacancyId);
     }
@@ -132,8 +134,8 @@ async function applyVacancy(btn){
     });
 }
 
-async function getVacancyInfo(id){
-    return new Promise(resolve => {
+function getVacancyInfo(id){
+    return new Promise(async resolve => {
         const url = `https://saratov.hh.ru/vacancy/${id}`;
         const regexpDescription = /(?<=data-qa="vacancy-description">).+?(?=<\/div><\/div><div class="vacancy-section vacancy-section_magritte">)/mg;
         const regexpTitle = /(?<=<h1 data-qa="title"[^>]+?>).+?(?=<\/h1)/mg;
@@ -145,21 +147,20 @@ async function getVacancyInfo(id){
         const regexpEmployer = /(?<=<a data-qa="vacancy-company-name".+magritte-text_typography-title.*">).+?(?=<\/span><\/a><\/span>)/mg;
         const regexpTags = /<[^>]+>/g;
         
-        fetch(url).then(async r => {
-            const html = await r.text();
-            const employer = html.match(regexpEmployer)?.at(0);
-            const title = html.match(regexpTitle)?.at(0);
-            const salary = html.match(regexpSalary)?.at(0);
-            const experience = html.match(regexpExperience)?.at(0);
-            const employment = html.match(regexpEmployment)?.at(0);
-            const shedule = html.match(regexpShedule)?.at(0);
-            const skills = [...html.matchAll(regexpSkills)].join(" | ");
-            const descriptionUnparsed = html.match(regexpDescription)?.at(0);
-            const descriptionNotShield = descriptionUnparsed?.replace(regexpTags, "");
-            const description = `${descriptionNotShield?.replaceAll(/("+)/mg, "\"$1")}`;
-            
-            resolve([url, employer, title, salary, experience, employment, shedule, skills, description]);
-        });  
+        const request = await fetch(url);
+        const html = await request.text();
+        const employer = html.match(regexpEmployer)?.at(0);
+        const title = html.match(regexpTitle)?.at(0);
+        const salary = html.match(regexpSalary)?.at(0);
+        const experience = html.match(regexpExperience)?.at(0);
+        const employment = html.match(regexpEmployment)?.at(0);
+        const shedule = html.match(regexpShedule)?.at(0);
+        const skills = [...html.matchAll(regexpSkills)].join(" | ");
+        const descriptionUnparsed = html.match(regexpDescription)?.at(0);
+        const descriptionNotShield = descriptionUnparsed?.replace(regexpTags, "");
+        const description = `${descriptionNotShield?.replaceAll(/("+)/mg, "\"$1")}`;
+
+        resolve([url, employer, title, salary, experience, employment, shedule, skills, description]);
     })
 }
 
