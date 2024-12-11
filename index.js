@@ -9,21 +9,21 @@ beforeFlipping(function(){
     
         const btnsArray = Array.from(btns).map(e => [new URL(e.href).searchParams.get("vacancyId"), e]);
         let i = 0;
+
+        for (let [vacancyId, btn] of btnsArray) {
+            (async () => {
+                const status = await getType(vacancyId);
+            
+                if(status == "quickResponse")
+                    await applyVacancy(btn);
         
-        btnsArray.forEach(async (arr) => {
-            let [vacancyId, btn] = arr;
-    
-            
-            const status = await getType(vacancyId);
-            
-            if(status == "quickResponse")
-                await applyVacancy(btn);
-    
-            i++;
-            
-            if(i == btnsArray.length)
-                resolve();
-        })
+                i++;
+                
+                if(i == btnsArray.length)
+                    resolve();
+            })();
+            await new Promise((r) => setTimeout(r, 200));
+        }
     })
 })
 
