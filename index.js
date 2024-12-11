@@ -1,25 +1,30 @@
-const ignore = [];
+beforeFlipping(function(){
+    return new Promise(async resolve => {
+        const btns = await getButtons();
 
-beforeFlipping(async function(){
-
-    const btns = await getButtons();
+        if(!btns.length){
+            resolve();
+            return;
+        }
     
-    if(!btns) return;
-
-    const btnsArray = Array.from(btns).map(e => [new URL(e.href).searchParams.get("vacancyId"), e]);
-    
-    for (let [vacancyId, btn] of btnsArray) {
-        if(ignore.includes(vacancyId))
-                continue;
+        const btnsArray = Array.from(btns).map(e => [new URL(e.href).searchParams.get("vacancyId"), e]);
+        let i = 0;
         
-        const status = await getType(vacancyId);
-        
-        if(status == "quickResponse")
-            await applyVacancy(btn);
-
-        ignore.push(vacancyId);
-    }
+        btnsArray.forEach(async (arr) => {
+            let [vacancyId, btn] = arr;
     
+            
+            const status = await getType(vacancyId);
+            
+            if(status == "quickResponse")
+                await applyVacancy(btn);
+    
+            i++;
+            
+            if(i == btnsArray.length)
+                resolve();
+        })
+    })
 })
 
 async function beforeFlipping(callback){
