@@ -1,4 +1,3 @@
-let csv = "Ссылка; Компания; Название; Доход; Опыт; График; Формат; Умения; Описание";
 const ignore = [];
 
 beforeFlipping(async function(){
@@ -6,18 +5,16 @@ beforeFlipping(async function(){
     const btns = await getButtons();
     
     if(!btns) return;
-    
-    for (let btn of btns) {
-        const vacancyId = new URL(btn.href).searchParams.get("vacancyId");
 
+    const btnsArray = Array.from(btns).map(e => [new URL(e.href).searchParams.get("vacancyId"), e]);
+    
+    for (let [vacancyId, btn] of btnsArray) {
         if(ignore.includes(vacancyId))
                 continue;
         
         const status = await getType(vacancyId);
         
-        if(status != "quickResponse")
-            csv += `\n"${(await getVacancyInfo(vacancyId)).join('", "')}"`;
-        else
+        if(status == "quickResponse")
             await applyVacancy(btn);
 
         ignore.push(vacancyId);
@@ -41,7 +38,6 @@ async function beforeFlipping(callback){
         }
     } while (nextPage)
 
-    download("table.csv", csv);
     alert("finished!")
 }
 
@@ -67,29 +63,28 @@ function isChangedPage(prev){
     })
 };
 
-function getIndexPage(pageNode){
-    const pagination = Array.from(document.querySelectorAll("a[data-qa='pager-page']"));
-    return pagination.indexOf(pageNode);
-}
-
 function getCurrentPage(){
     return document.querySelector(`a[aria-current="true"]`)?.innerHTML;
 }
 
-function getButtons(){
-    const lastTime = new Date().getTime();
-    
+function getQuickBtns(list){
     return new Promise(resolve => {
-        const id = setInterval(() => {
-            const time = new Date().getTime();
-            const btns = document.querySelectorAll(`a[href^="/applicant/vacancy_response"]`);
-    
-            if(btns.length || time - lastTime >= 5000){
-                resolve(btns);
-                clearInterval(id);
-            }
-        }, 100)
-    });
+        let i = 0;
+        const result = [];
+        
+        list.forEach(async (e) => {
+            const [id, btn] = e;
+            const status = await getType(id);
+            
+            if(status == "quickResponse")
+                result.push(e);
+
+            i++;
+
+            if(i == list.length)
+                resolve(result);
+        })  
+    })
 }
 
 async function getType(id){
@@ -109,24 +104,18 @@ async function getType(id){
 }
 
 async function applyVacancy(btn){
-    const parent = btn.closest('div[data-qa^="vacancy-serp__vacancy"]');
-
     btn.click();
 
     return new Promise(resolve => {
         const id = setInterval( () => {
             const relocationConfirm = document.querySelector(`[data-qa="relocation-warning-confirm"]`);
             const closeChatik = document.querySelector(`[data-qa="chatik-close-chatik"]`);
-            const status = parent.querySelector(`div[class*="workflow-status-container_mobile--"]`);    
-            let isApplied;
-
-            if(status && status.children)
-                isApplied = Array.from(status.children).at(-1)?.innerHTML == "Вы откликнулись";
+            const isChildBody = btn.closest("body")
     
             relocationConfirm?.click();
             closeChatik?.click();
             
-            if(isApplied){
+            if(isChildBody){
                 clearInterval(id);
                 resolve();
             }
@@ -134,45 +123,18 @@ async function applyVacancy(btn){
     });
 }
 
-function getVacancyInfo(id){
-    return new Promise(async resolve => {
-        const url = `https://saratov.hh.ru/vacancy/${id}`;
-        const regexpDescription = /(?<=data-qa="vacancy-description">).+?(?=<\/div><\/div><div class="vacancy-section vacancy-section_magritte">)/mg;
-        const regexpTitle = /(?<=<h1 data-qa="title"[^>]+?>).+?(?=<\/h1)/mg;
-        const regexpSalary = /(?<=<\/h1><\/div><\/div><span[^>]+?>).+?(?=<\/span>)/mg;
-        const regexpExperience = /(?<=<span data-qa="vacancy-experience">).+?(?=<\/span>)/mg;
-        const regexpShedule = /(?<=Формат работы: <!-- -->).+?(?=<\/p>)/mg;
-        const regexpEmployment = /(?<=График: <!-- -->).+?(?=<\/p)/mg;
-        const regexpSkills = /(?<=<li data-qa="skills-element">.*<div class="magritte-tag__label___[^>]*?">).*?(?=<\/div><\/div><\/li>)/mg;
-        const regexpEmployer = /(?<=<a data-qa="vacancy-company-name".+magritte-text_typography-title.*">).+?(?=<\/span><\/a><\/span>)/mg;
-        const regexpTags = /<[^>]+>/g;
-        
-        const request = await fetch(url);
-        const html = await request.text();
-        const employer = html.match(regexpEmployer)?.at(0);
-        const title = html.match(regexpTitle)?.at(0);
-        const salary = html.match(regexpSalary)?.at(0);
-        const experience = html.match(regexpExperience)?.at(0);
-        const employment = html.match(regexpEmployment)?.at(0);
-        const shedule = html.match(regexpShedule)?.at(0);
-        const skills = [...html.matchAll(regexpSkills)].join(" | ");
-        const descriptionUnparsed = html.match(regexpDescription)?.at(0);
-        const descriptionNotShield = descriptionUnparsed?.replace(regexpTags, "");
-        const description = `${descriptionNotShield?.replaceAll(/("+)/mg, "\"$1")}`;
-
-        resolve([url, employer, title, salary, experience, employment, shedule, skills, description]);
-    })
-}
-
-function download(filename, text) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
+function getButtons(){
+    const lastTime = new Date().getTime();
+    
+    return new Promise(resolve => {
+        const id = setInterval(() => {
+            const time = new Date().getTime();
+            const btns = document.querySelectorAll(`[data-qa="vacancy-serp__vacancy_response"]`);
+    
+            if(btns.length || time - lastTime >= 5000){
+                resolve(btns);
+                clearInterval(id);
+            }
+        }, 100)
+    });
 }
