@@ -1,4 +1,4 @@
-let csv = "Ссылка; Название; Оклад; Опыт; Занятость; Формат; Компания; Область; Описание";
+let csv = "Ссылка; Компания; Название; Доход; Опыт; График; Формат; Умения; Описание";
 const ignore = [];
 
 beforeFlipping(async function(){
@@ -139,7 +139,8 @@ async function getVacancyInfo(id){
         const regexpTitle = /(?<=<h1 data-qa="title"[^>]+?>).+?(?=<\/h1)/mg;
         const regexpSalary = /(?<=<\/h1><\/div><\/div><span[^>]+?>).+?(?=<\/span>)/mg;
         const regexpExperience = /(?<=<span data-qa="vacancy-experience">).+?(?=<\/span>)/mg;
-        const regexpShedule = /(?<=График: <!-- -->).+?(?=<\/p)/mg;
+        const regexpShedule = /(?<=Формат работы: <!-- -->).+?(?=<\/p>)/mg;
+        const regexpEmployment = /(?<=График: <!-- -->).+?(?=<\/p)/mg;
         const regexpSkills = /(?<=<li data-qa="skills-element">.*<div class="magritte-tag__label___[^>]*?">).*?(?=<\/div><\/div><\/li>)/mg;
         const regexpEmployer = /(?<=<a data-qa="vacancy-company-name".+magritte-text_typography-title.*">).+?(?=<\/span><\/a><\/span>)/mg;
         const regexpTags = /<[^>]+>/g;
@@ -150,13 +151,14 @@ async function getVacancyInfo(id){
             const title = html.match(regexpTitle)?.at(0);
             const salary = html.match(regexpSalary)?.at(0);
             const experience = html.match(regexpExperience)?.at(0);
+            const employment = html.match(regexpEmployment)?.at(0);
             const shedule = html.match(regexpShedule)?.at(0);
             const skills = [...html.matchAll(regexpSkills)].join(" | ");
             const descriptionUnparsed = html.match(regexpDescription)?.at(0);
-            const descriptionNotShield = descriptionUnparsed.replace(regexpTags, "");
-            const description = `${descriptionNotShield.replaceAll(/("+)/mg, "\"$1")}`;
+            const descriptionNotShield = descriptionUnparsed?.replace(regexpTags, "");
+            const description = `${descriptionNotShield?.replaceAll(/("+)/mg, "\"$1")}`;
             
-            resolve([url, employer, title, salary, experience, shedule, skills, description]);
+            resolve([url, employer, title, salary, experience, employment, shedule, skills, description]);
         });  
     })
 }
