@@ -127,6 +127,8 @@ async function applyVacancy(btn){
             
             if(modalConfirm && modalTextarea && modalText){
                 modalTextarea.value = modalText;
+                modalTextarea.dispatchEvent(new Event('change'));
+                
                 modalConfirm.click();
             }
 
