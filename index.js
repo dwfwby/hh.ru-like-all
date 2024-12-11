@@ -1,3 +1,4 @@
+let csv = "Ссылка; Название; Оклад; Опыт; Занятость; Формат; Компания; Область; Описание";
 const ignore = [];
 
 beforeFlipping(async function(){
@@ -14,8 +15,8 @@ beforeFlipping(async function(){
         
         const status = await getType(vacancyId);
         
-        if(status == "quickResponse")
-            applyVacancy(btn);
+        if(status != "quickResponse")
+            csv += `\n"${(await getVacancyInfo(vacancyId)).join('", "')}"`;
 
         ignore.push(vacancyId);
     }
@@ -38,6 +39,7 @@ async function beforeFlipping(callback){
         }
     } while (nextPage)
 
+    download("table.csv", csv);
     alert("finished!")
 }
 
@@ -128,4 +130,46 @@ async function applyVacancy(btn){
             }
         },100);
     });
+}
+
+async function getVacancyInfo(id){
+    return new Promise(resolve => {
+        const url = `https://saratov.hh.ru/vacancy/${id}`;
+        const regexpDescription = /(?<=data-qa="vacancy-description">).+?(?=<\/div><\/div><div class="vacancy-section vacancy-section_magritte">)/mg;
+        const regexpTitle = /(?<=<h1 data-qa="title"[^>]+?>).+?(?=<\/h1)/mg;
+        const regexpSalary = /(?<=<\/h1><\/div><\/div><span[^>]+?>).+?(?=<\/span>)/mg;
+        const regexpExperience = /(?<=<span data-qa="vacancy-experience">).+?(?=<\/span>)/mg;
+        const regexpShedule = /(?<=График: <!-- -->).+?(?=<\/p)/mg;
+        const regexpSkills = /(?<=<li data-qa="skills-element">.*<div class="magritte-tag__label___[^>]*?">).*?(?=<\/div><\/div><\/li>)/mg;
+        const regexpEmployer = /(?<=<a data-qa="vacancy-company-name".+magritte-text_typography-title.*">).+?(?=<\/span><\/a><\/span>)/mg;
+        const regexpTags = /<[^>]+>/g;
+        
+        fetch(url).then(async r => {
+            const html = await r.text();
+            const employer = html.match(regexpEmployer)?.at(0);
+            const title = html.match(regexpTitle)?.at(0);
+            const salary = html.match(regexpSalary)?.at(0);
+            const experience = html.match(regexpExperience)?.at(0);
+            const shedule = html.match(regexpShedule)?.at(0);
+            const skills = [...html.matchAll(regexpSkills)].join(" | ");
+            const descriptionUnparsed = html.match(regexpDescription)?.at(0);
+            const descriptionNotShield = descriptionUnparsed.replace(regexpTags, "");
+            const description = `${descriptionNotShield.replaceAll(/("+)/mg, "\"$1")}`;
+            
+            resolve([url, employer, title, salary, experience, shedule, skills, description]);
+        });  
+    })
+}
+
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
 }
