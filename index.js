@@ -13,7 +13,7 @@ beforeFlipping(function(){
         for (let [vacancyId, btn] of btnsArray) {
             (async () => {
                 const status = await getType(vacancyId);
-            
+                
                 if(status == "quickResponse")
                     await applyVacancy(btn);
         
@@ -22,7 +22,6 @@ beforeFlipping(function(){
                 if(i == btnsArray.length)
                     resolve();
             })();
-            await new Promise((r) => setTimeout(r, 200));
         }
     })
 })
@@ -120,7 +119,7 @@ async function applyVacancy(btn){
             relocationConfirm?.click();
             closeChatik?.click();
             
-            if(isChildBody){
+            if(!isChildBody){
                 clearInterval(id);
                 resolve();
             }
