@@ -113,13 +113,17 @@ async function applyVacancy(btn){
     return new Promise(resolve => {
         const id = setInterval( () => {
             const relocationConfirm = document.querySelector(`[data-qa="relocation-warning-confirm"]`);
+            const chatIsOpened = document.querySelector(".chatik-integration_visible");
             const closeChatik = document.querySelector(`[data-qa="chatik-close-chatik"]`);
-            const isChildBody = btn.closest("body")
+            const statusEl = Array.from(btn.parentNode?.children[0] || []).at(-1);
+            const isApplied = statusEl == "Вы откликнулись";
     
             relocationConfirm?.click();
-            closeChatik?.click();
+
+            if(chatIsOpened)
+                closeChatik.click();
             
-            if(!isChildBody){
+            if(isApplied){
                 clearInterval(id);
                 resolve();
             }
